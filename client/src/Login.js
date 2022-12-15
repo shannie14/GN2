@@ -1,102 +1,60 @@
-import { useRef, useState, useEffect, useContext } from 'react';
-import AuthContext from "./context/AuthProvider";
-
-import axios from './api/axios';
-const LOGIN_URL = '/auth';
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
-    const { setAuth } = useContext(AuthContext);
-    const userRef = useRef();
-    const errRef = useRef();
-
-    const [user, setUser] = useState('');
-    const [pwd, setPwd] = useState('');
-    const [errMsg, setErrMsg] = useState('');
-    //replace below with home page after successful log-in
-    const [success, setSuccess] = useState(false);
-
-    useEffect(() => {
-        userRef.current.focus();
-    }, [])
-
-    useEffect(() => {
-        setErrMsg('');
-    }, [user, pwd])
-
-    //receives event then prevents default behavior of the form to reload pg
-    const handleSubmit = async (e) => {
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const navigate = useNavigate();
+    console.log('what is pw state atm', password);
+    const handleLogin = (e) => {
         e.preventDefault();
-
-        try {
-            const response = await axios.post(LOGIN_URL,
-                JSON.stringify({ user, pwd }),
-                {
-                    headers: { 'Content-Type': 'application/json' },
-                    withCredentials: true
-                }
-            );
-            console.log(JSON.stringify(response?.data));
-            //console.log(JSON.stringify(response));
-            const accessToken = response?.data?.accessToken;
-            const roles = response?.data?.roles;
-            setAuth({ user, pwd, roles, accessToken });
-            setUser('');
-            setPwd('');
-            setSuccess(true);
-        } catch (err) {
-            if (!err?.response) {
-                setErrMsg('No Server Response');
-            } else if (err.response?.status === 400) {
-                setErrMsg('Missing Username or Password');
-            } else if (err.response?.status === 401) {
-                setErrMsg('Unauthorized');
-            } else {
-                setErrMsg('Login Failed');
-            }
-            errRef.current.focus();
+        const data = {
+            apple: username,
+            password: password
         }
-    }
-
+        axios.post("http://localhost:3001/login", data)
+            .then(res => {
+                console.log("you made it this far", res)
+                if (!res.data) {
+                    // display error message to user
+                    console.log('user not found');
+                } else {
+                    navigate('/dashboard')
+                }
+            })
+        //send {username} and {password} to backend
+    };
     return (
-        <>
-            {success ? (
-                <section>
-                    <h1>You are logged in!</h1>
-                    <br />
-                    <p>
-                        <a href="#">Go to Home</a>
-                    </p>
-                </section>
-            ) : (
-                <section>
-                    <p ref={errRef} className={errMsg ? "errmsg" : "offscreen"} aria-live="assertive">{errMsg}</p>
-                    <h1>Welcome</h1>
-                    <form onSubmit={handleSubmit}>
-                        <label htmlFor="username">Username:</label>
-                        <input //attributes below
-                            type="text"
-                            id="username"
-                            ref={userRef} //Joey
-                            autoComplete="off"
-                            onChange={(e) => setUser(e.target.value)} //Joey
-                            value={user}
-                            required
-                        />
+        <div>
+            <h1>LOG IN PAGE</h1>
+            <form onSubmit={(e) => handleLogin(e)}>
+                <label htmlFor="username">Username:</label>
+                <input //attributes below
+                    type="text"
+                    id="username"
+                    // ref={userRef} //Joey
+                    autoComplete="off"
+                    onChange={(e) => setUsername(e.target.value)} //Joey
+                    // value={user}
+                    required
+                />
 
-                        <label htmlFor="password">Password:</label>
-                        <input
-                            type="password"
-                            id="password"
-                            onChange={(e) => setPwd(e.target.value)}
-                            value={pwd}
-                            required
-                        />
-                        <button>Sign In</button>
-                    </form>
-                </section>
-            )}
-        </>
+                <label htmlFor="password">Password:</label>
+                <input //attributes below
+                    type="password"
+                    id="password"
+                    // ref={userRef} //Joey
+                    autoComplete="off"
+                    onChange={(e) => setPassword(e.target.value)} //Joey
+                    // value={user}
+                    required
+                />
+                <button>Sign In</button>
+            </form>
+        </div>
     )
 }
 
-export default Login
+
+export default Login;
